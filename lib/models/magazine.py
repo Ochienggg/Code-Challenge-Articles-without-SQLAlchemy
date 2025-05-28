@@ -5,6 +5,9 @@ import importlib
 
 
 class Magazine:
+    _Article = None  # Class-level cache for Article class
+    _Author = None   # Class-level cache for Author class
+
     def __init__(self, name: str, category: str, id: Optional[int] = None):
         self.name = name
         self.category = category
@@ -66,8 +69,9 @@ class Magazine:
             raise ValueError("Magazine must be saved before retrieving articles.")
 
         try:
-            if not hasattr(self, "_Article"):
-                self._Article = importlib.import_module("lib.models.article").Article
+            # Cache the Article class at class level
+            if self.__class__._Article is None:
+                self.__class__._Article = importlib.import_module("lib.models.article").Article
 
             CURSOR.execute("""
                 SELECT id, title, content, author_id, magazine_id
@@ -76,7 +80,8 @@ class Magazine:
             """, (self.id,))
             rows = CURSOR.fetchall()
 
-            return [self._Article(*row) for row in rows]
+            # Assumes Article constructor matches columns order
+            return [self.__class__._Article(*row) for row in rows]
         except (sqlite3.DatabaseError, ImportError, AttributeError) as e:
             raise RuntimeError(f"Error retrieving articles: {e}") from e
 
@@ -86,8 +91,9 @@ class Magazine:
             raise ValueError("Magazine must be saved before retrieving contributors.")
 
         try:
-            if not hasattr(self, "_Author"):
-                self._Author = importlib.import_module("lib.models.author").Author
+            # Cache the Author class at class level
+            if self.__class__._Author is None:
+                self.__class__._Author = importlib.import_module("lib.models.author").Author
 
             CURSOR.execute("""
                 SELECT DISTINCT a.id, a.name
@@ -97,9 +103,11 @@ class Magazine:
             """, (self.id,))
             rows = CURSOR.fetchall()
 
-            return [self._Author(id=row[0], name=row[1]) for row in rows]
+            # Assumes Author constructor accepts id and name as keyword args
+            return [self.__class__._Author(id=row[0], name=row[1]) for row in rows]
         except (sqlite3.DatabaseError, ImportError, AttributeError) as e:
             raise RuntimeError(f"Error retrieving contributors: {e}") from e
+ 
 
 
 
