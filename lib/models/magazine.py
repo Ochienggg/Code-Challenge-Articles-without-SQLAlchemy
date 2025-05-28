@@ -59,7 +59,8 @@ class Magazine:
                 (magazine_id,)
             )
             row = CURSOR.fetchone()
-            return cls(id=row[0], name=row[1], category=row[2]) if row else None
+            # Positional match with __init__(name, category, id)
+            return cls(name=row[1], category=row[2], id=row[0]) if row else None
         except sqlite3.DatabaseError as e:
             raise RuntimeError(f"Error finding magazine by ID: {e}") from e
 
@@ -69,7 +70,6 @@ class Magazine:
             raise ValueError("Magazine must be saved before retrieving articles.")
 
         try:
-            # Cache the Article class at class level
             if self.__class__._Article is None:
                 self.__class__._Article = importlib.import_module("lib.models.article").Article
 
@@ -80,7 +80,6 @@ class Magazine:
             """, (self.id,))
             rows = CURSOR.fetchall()
 
-            # Assumes Article constructor matches columns order
             return [self.__class__._Article(*row) for row in rows]
         except (sqlite3.DatabaseError, ImportError, AttributeError) as e:
             raise RuntimeError(f"Error retrieving articles: {e}") from e
@@ -91,7 +90,6 @@ class Magazine:
             raise ValueError("Magazine must be saved before retrieving contributors.")
 
         try:
-            # Cache the Author class at class level
             if self.__class__._Author is None:
                 self.__class__._Author = importlib.import_module("lib.models.author").Author
 
@@ -103,10 +101,11 @@ class Magazine:
             """, (self.id,))
             rows = CURSOR.fetchall()
 
-            # Assumes Author constructor accepts id and name as keyword args
-            return [self.__class__._Author(id=row[0], name=row[1]) for row in rows]
+            # Use positional args: Author(name, id)
+            return [self.__class__._Author(row[1], row[0]) for row in rows]
         except (sqlite3.DatabaseError, ImportError, AttributeError) as e:
             raise RuntimeError(f"Error retrieving contributors: {e}") from e
+
  
 
 

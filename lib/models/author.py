@@ -39,7 +39,19 @@ class Author:
         return [Article(*row) for row in rows]
 
     def magazines(self):
-        if self
+        if self.id is None:
+            raise ValueError("Author must be saved before retrieving magazines.")
+        from lib.models.magazine import Magazine
+        CURSOR.execute("""
+            SELECT DISTINCT m.id, m.name, m.category
+            FROM magazines m
+            JOIN articles a ON a.magazine_id = m.id
+            WHERE a.author_id = ?
+        """, (self.id,))
+        rows = CURSOR.fetchall()
+        return [Magazine(*row) for row in rows]
+
+
 
 
 
