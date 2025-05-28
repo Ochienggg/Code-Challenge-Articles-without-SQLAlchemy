@@ -1,118 +1,134 @@
-# Python OOP Project: Authors, Articles & Magazines
 
-This project demonstrates a simple Object-Oriented Programming (OOP) design in Python with persistent storage using SQLite. It models a basic publishing system with `Author`, `Article`, and `Magazine` classes.
+# 📰 Author-Magazine-Article Management System
 
----
-
-## Features
-
-- Define authors who write articles.
-- Articles belong to magazines.
-- Authors can have multiple articles.
-- Magazines have multiple articles and contributors.
-- Basic CRUD operations with SQLite database.
-- Demonstrates relationships between models using SQL JOIN queries.
+A Python-based mini ORM project that models a publishing system with `Authors`, `Magazines`, and `Articles` using `sqlite3`. This project demonstrates fundamental object-relational mapping, database interaction, and modular architecture without using external frameworks.
 
 ---
 
-## Project Structure
+## 📌 Overview
+
+This system allows:
+
+- Creating and managing **Authors**, **Magazines**, and **Articles**
+- Associating articles with both authors and magazines
+- Retrieving all articles by a specific author
+- Finding all contributors (authors) to a particular magazine
+- Running a fully persistent system using SQLite
+
+---
+
+
+
+## 🧱 Project Structure
 
 ```
 
-lib/
+your\_project/
+│
+├── main.py                        # Entry point to run the program
+├── README.md                      # Project documentation
+├── database.db                    # SQLite database file (auto-generated)
+│
+└── lib/
 ├── db/
-│   ├── connection.py       # Database connection and cursor
-├── models/
-│   ├── author.py           # Author class
-│   ├── article.py          # Article class
-│   ├── magazine.py         # Magazine class
-├── testing/
-│   ├── author\_test.py      # Tests for Author
-│   ├── article\_test.py     # Tests for Article
-│   ├── magazine\_test.py    # Tests for Magazine
+│   └── connection.py          # Sets up SQLite connection and cursor
+│
+└── models/
+├── author.py              # Author model and related methods
+├── article.py             # Article model and relationships
+└── magazine.py            # Magazine model and relationships
 
 ````
 
 ---
 
-## Setup
+## 📦 Setup Instructions
 
-1. **Clone the repository**
+### 1. Clone or Download the Project
 
 ```bash
-git clone https://github.com/Ochienggg/Code-Challenge-Articles-without-SQLAlchemy.git
-cd your-repo-name
+git clone git@github.com:Ochienggg/Code-Challenge-Articles-without-SQLAlchemy.git
+cd Code-Challenge-Articles-without-SQLAlchemy
 ````
 
-2. **Install dependencies**
+### 2. Optional: Create a Virtual Environment
 
-This project uses the standard library, so no extra dependencies are required.
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
 
-3. **Initialize the database**
+### 3. Run the Application
 
-Make sure you have a SQLite database set up with tables: `authors`, `articles`, `magazines`.
-
-Example SQL schema:
-
-```sql
-CREATE TABLE authors (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL
-);
-
-CREATE TABLE magazines (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  category TEXT NOT NULL
-);
-
-CREATE TABLE articles (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  author_id INTEGER NOT NULL,
-  magazine_id INTEGER NOT NULL,
-  FOREIGN KEY(author_id) REFERENCES authors(id),
-  FOREIGN KEY(magazine_id) REFERENCES magazines(id)
-);
+```bash
+python main.py
 ```
 
 ---
 
-## Usage
+## 🧪 Example Workflow
 
-* Create and save Authors, Articles, and Magazines.
-* Query related objects, e.g., get all articles by an author or all contributors to a magazine.
-
-Example:
+Here's a sample of what the code usage looks like inside `main.py`:
 
 ```python
 from lib.models.author import Author
+from lib.models.article import Article
+from lib.models.magazine import Magazine
 
-author = Author("Jane Doe")
+# Step 1: Create tables
+Author.create_table()
+Article.create_table()
+Magazine.create_table()
+
+# Step 2: Create and save entities
+author = Author(name="Alice Johnson")
 author.save()
 
-articles = author.articles()
-for article in articles:
-    print(article.title)
+magazine = Magazine(name="Science Weekly", category="Science")
+magazine.save()
+
+article = Article(
+    id=None,
+    title="The Future of Space Travel",
+    content="Exploring Mars and beyond...",
+    author_id=author.id,
+    magazine_id=magazine.id
+)
+article.save()
+
+# Step 3: Query relationships
+print("Author's Articles:", author.articles())
+print("Author's Magazines:", author.magazines())
+print("Magazine's Articles:", magazine.articles())
+print("Magazine's Contributors:", magazine.contributors())
 ```
 
 ---
 
-## Testing
+## 🔍 Features in Detail
 
-Tests are written using `pytest`.
+### Author Model (`author.py`)
 
-Run tests with:
+* `create_table()`: Creates the authors table.
+* `save()`: Inserts a new author into the database.
+* `articles()`: Returns all articles written by this author.
+* `magazines()`: Returns unique magazines this author has written for.
 
-```bash
-pytest
-```
+### Article Model (`article.py`)
+
+* `create_table()`: Creates the articles table with foreign keys.
+* `save()`: Inserts the article into the database.
+* `find_by_id(id)`: Retrieves an article by ID.
+* `author()`: Returns the `Author` of the article.
+* `magazine()`: Returns the `Magazine` the article belongs to.
+
+### Magazine Model (`magazine.py`)
+
+* `create_table()`: Creates the magazines table.
+* `save()`: Inserts or updates a magazine.
+* `find_by_id(id)`: Retrieves a magazine by ID.
+* `articles()`: Returns all articles published in the magazine.
+* `contributors()`: Returns all distinct authors who contributed.
 
 ---
 
-## Contributing
-
-Feel free to submit issues or pull requests.
-
----
