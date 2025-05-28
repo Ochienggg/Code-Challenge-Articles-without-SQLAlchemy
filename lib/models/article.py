@@ -1,16 +1,21 @@
 from lib.db.connection import CONN, CURSOR
+import sqlite3
+
 
 class Article:
-    def __init__(self, title, content, author_id, magazine_id, id=None):
+    def __init__(self, id, title, content, author_id, magazine_id):
+        self.id = id
         self.title = title
         self.content = content
         self.author_id = author_id
         self.magazine_id = magazine_id
-        self.id = id
+
+    def __repr__(self):
+        return f"<Article id={self.id}, title='{self.title}'>"
 
     @classmethod
     def create_table(cls):
-        """Create the articles table if it doesn't exist."""
+        CURSOR.execute("PRAGMA foreign_keys = ON;")
         CURSOR.execute("""
             CREATE TABLE IF NOT EXISTS articles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,24 +30,26 @@ class Article:
         CONN.commit()
 
     def save(self):
-        """Insert or update the article in the database."""
-        if self.id is None:
-            CURSOR.execute(
-                "INSERT INTO articles (title, content, author_id, magazine_id) VALUES (?, ?, ?, ?)",
-                (self.title, self.content, self.author_id, self.magazine_id)
-            )
-            self.id = CURSOR.lastrowid
-        else:
-            CURSOR.execute(
-                "UPDATE articles SET title = ?, content = ?, author_id = ?, magazine_id = ? WHERE id = ?",
-                (self.title, self.content, self.author_id, self.magazine_id, self.id)
-            )
-        CONN.commit()
+        try:
+            if self.id is None:
+                CURSOR.execute(
+                    "INSERT INTO articles (title, content, author_id, magazine_id) VALUES (?, ?, ?, ?)",
+                    (self.title, self.content, self.author_id, self.magazine_id)
+                )
+                self.id = CURSOR.lastrowid
+            else:
+                CURSOR.execute(
+                    "UPDATE articles SET title = ?, content = ?, author_id = ?, magazine_id = ? WHERE id = ?",
+                    (self.title, self.content, self.author_id, self.magazine_id, self.id)
+                )
+            CONN.commit()
+        except sqlite3.DatabaseError as e:
+            raise RuntimeError(f"Error saving article: {e}") from e
 
     def delete(self):
-        """Delete the article from the database."""
         if self.id is None:
             raise ValueError("Article must be saved before it can be deleted.")
         CURSOR.execute("DELETE FROM articles WHERE id = ?", (self.id,))
         CONN.commit()
         self.id = None
+
